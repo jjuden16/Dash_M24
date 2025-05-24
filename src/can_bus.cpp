@@ -1,18 +1,23 @@
-#include "constants.h"
 #include <FlexCAN_T4.h>
-#include <can_bus.h>
 #include <string>
+#include "constants.h"
+#include "can_ids.h"
+#include "can_bus.h"
+
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16>  Can_Bus::flexcan_bus;
+std::map<int, float> Can_Bus::msg_values;
 
+// TODO: Does it make sense to initialize to 0 or should it be -1
 Can_Bus::Can_Bus()
 {
-  
+    msg_values.insert({CAN_FILTERED_SECONDARY_RPM, 0.0});
 }
+
 void Can_Bus::setup()
 {
   flexcan_bus.begin();
-  flexcan_bus.setBaudRate(1000000);
+  flexcan_bus.setBaudRate(FLEXCAN_BAUD_RATE);
   flexcan_bus.setMaxMB(FLEXCAN_MAX_MAILBOX);
   flexcan_bus.enableFIFO();
   flexcan_bus.enableFIFOInterrupt();
@@ -34,8 +39,7 @@ u8 Can_Bus::send_command(u32 func_id, u32 node_id, bool remote, u8 buf[]) {
     return -1;
   }
   
-  buf[0] = static_cast<u8>(func_id);
-  func_id = 0x1f;
+    msg.id = (node_id << 5) | func_id;
   
   msg.len = 8;
   memcpy(&msg.buf, buf, 8);
@@ -45,25 +49,31 @@ u8 Can_Bus::send_command(u32 func_id, u32 node_id, bool remote, u8 buf[]) {
  
   return write_code;
 }
+
 u8 Can_Bus::send_command(CAN_message_t msg) {
   return flexcan_bus.write(msg);
 }
 
 void Can_Bus::can_parse(const CAN_message_t &msg)
 {
-  u32 parsed_node_id = (msg.id >> 5) & 0x3F;
-  u32 cmd_id = msg.id & 0x1F;
-  /*
-  switch (parsed_node_id) {
-    case ODRIVE_ECVT_NODE_ID: //after figuring out cmd id change this later
-      odrive_ecvt->parse_message(msg);
-      break;
-    case ODRIVE_ECENT_NODE_ID: //after figuring out cmd id change this later
-      odrive_ecent->parse_message(msg);
-      break;
-    case CONTROLS_PCB_NODE_ID:
-    ;
+    u32 parsed_node_id = (msg.id >> 5) & 0x3F;
+    u32 cmd_id = msg.id & 0x1F;
+  
+    if(parsed_node_id == RASP_NODE_ID)
+        parse_message(msg);
 
-  }
-    */
+}
+
+void Can_Bus::parse_message(const CAN_message_t &msg) 
+{
+    u32 cmd_id = msg.id & 0x1F;
+
+    switch (cmd_id) {
+        case CAN_FILTERED_SECONDARY_RPM:
+            u32 secondary_rpm; 
+            memcpy(&secondary_rpm, msg.buf + 2, 4);
+            msg_values.at(CAN_FILTERED_SECONDARY_RPM) = secondary_rpm;
+            break;
+    }
+
 }
