@@ -15,10 +15,34 @@ Can_Bus bus;
 
 /* Display functions */
 void longPrint(String out);
+void activate_mph()
+{
+  display_mph = true;
+  display_rpm - false;
+}
+void activate_rpm()
+{
+  display_mph = false;
+  display_rpm - true;
+}
+
+/* Display variables */
+bool display_rpm = false;
+bool display_mph = true;
+
 
 void setup() {
+  //Reset LEDs
   digitalWrite(LED_1, LOW);
   digitalWrite(LED_2, LOW);
+
+  //Set buttons
+  pinMode(Button_1, INPUT);
+  pinMode(Button_2, INPUT);
+
+  attachInterrupt(Button_1, activate_mph, FALLING);
+  attachInterrupt(Button_2, activate_rpm, FALLING);
+
 
   Wire2.begin();
   bus.setup();
@@ -28,13 +52,26 @@ void setup() {
   Serial.println("7 Segment Backpack Test");
 #endif
   matrix.begin(0x70, &Wire2); //7-SEG connected to Wire 2
+
   digitalWrite(LED_2, HIGH);
+  longPrint("dont crASH");
 }
 
 void loop() {
 
   float filtered_secondary_rpm = bus.msg_values.at(CAN_FILTERED_SECONDARY_RPM);
   float wheel_mph = filtered_secondary_rpm * WHEEL_TO_SECONDARY_RATIO * WHEEL_MPH_PER_RPM; 
+
+  //Display RPM or MPH
+  if(display_rpm)
+  {
+    matrix.println(filtered_secondary_rpm);
+  }
+  else if(display_mph)
+  {
+    matrix.println(wheel_mph);
+  }
+  matrix.writeDisplay();
 }
 
 /* Display Functions */
