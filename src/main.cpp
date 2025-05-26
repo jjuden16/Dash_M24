@@ -5,7 +5,7 @@
 #include "can_bus.h"
 
 /* LED Backpack */ 
-#include <Wire.h> // Enable this line if using Arduino Uno, Mega, etc.
+#include <Wire.h>
 #include <Adafruit_GFX.h>
 #include "Adafruit_LEDBackpack.h"
 
@@ -13,7 +13,13 @@
 Adafruit_7segment matrix = Adafruit_7segment();
 Can_Bus bus; 
 
+/* Display functions */
+void longPrint(String out);
+
 void setup() {
+  digitalWrite(LED_1, LOW);
+  digitalWrite(LED_2, LOW);
+
   Wire2.begin();
   bus.setup();
 
@@ -21,62 +27,35 @@ void setup() {
   Serial.begin(9600);
   Serial.println("7 Segment Backpack Test");
 #endif
-  matrix.begin(0x70, &Wire2);
+  matrix.begin(0x70, &Wire2); //7-SEG connected to Wire 2
   digitalWrite(LED_2, HIGH);
-
 }
 
 void loop() {
 
   float filtered_secondary_rpm = bus.msg_values.at(CAN_FILTERED_SECONDARY_RPM);
   float wheel_mph = filtered_secondary_rpm * WHEEL_TO_SECONDARY_RATIO * WHEEL_MPH_PER_RPM; 
+}
 
-  // try to print a number thats too long
-  matrix.print(10000, DEC);
-  matrix.writeDisplay();
-  delay(500);
-
-  // print a hex number
-  matrix.print(0xBEEF, HEX);
-  matrix.writeDisplay();
-  delay(500);
-
-  // print a floating point 
-  matrix.print(12.34);
-  matrix.writeDisplay();
-  delay(500);
-
-  // print a string message
-  matrix.print("7SEG");
-  matrix.writeDisplay();
-  delay(10000);
-  
-  // print with print/println
-  for (uint16_t counter = 0; counter < 9999; counter++) {
-    matrix.println(counter);
+/* Display Functions */
+void longPrint(String out)
+{
+  int l = out.length();
+  for(int i = 0; i <= (l-3); i++)
+  {
+    String print = out.substring(i,i+4);
+    matrix.println(print);
     matrix.writeDisplay();
-    delay(10);
+    delay(500);
   }
-
-  // method #2 - draw each digit
-  uint16_t blinkcounter = 0;
-  boolean drawDots = false;
-  for (uint16_t counter = 0; counter < 9999; counter ++) {
-    matrix.writeDigitNum(0, (counter / 1000), drawDots);
-    matrix.writeDigitNum(1, (counter / 100) % 10, drawDots);
-    matrix.drawColon(drawDots);
-    matrix.writeDigitNum(3, (counter / 10) % 10, drawDots);
-    matrix.writeDigitNum(4, counter % 10, drawDots);
-   
-    blinkcounter+=50;
-    if (blinkcounter < 500) {
-      drawDots = false;
-    } else if (blinkcounter < 1000) {
-      drawDots = true;
-    } else {
-      blinkcounter = 0;
-    }
+  for(int i = l-3; i <= l; i++)
+  {
+    String print = out.substring(i,l+1);
+    print = print + "    ";
+    matrix.println(print);
     matrix.writeDisplay();
-    delay(10);
+    delay(500);
   }
+ 
+  delay(1000);
 }
