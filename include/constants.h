@@ -55,7 +55,7 @@ constexpr float ODRIVE_VEL_LIMIT = 20.0;        // rot / s    //TODO: Change thi
 constexpr float ODRIVE_CURRENT_SOFT_MAX = 10.0; // A          // TODO: Check if this is the right value 
 
 // Flexcan
-constexpr u32 FLEXCAN_BAUD_RATE = 1000000;  
+constexpr u32 FLEXCAN_BAUD_RATE = 250000;  
 constexpr u32 FLEXCAN_MAX_MAILBOX = 63;     
 // Logging
 // bytes_per_cycle * cycle_freq * time_to_flush_sd * safety_factor
