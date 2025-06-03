@@ -13,22 +13,22 @@
 Adafruit_7segment matrix = Adafruit_7segment();
 Can_Bus bus; 
 
+/* Display variables */
+bool display_rpm = false;
+bool display_mph = true;
+
 /* Display functions */
 void longPrint(String out);
 void activate_mph()
 {
   display_mph = true;
-  display_rpm - false;
+  display_rpm = false;
 }
 void activate_rpm()
 {
   display_mph = false;
-  display_rpm - true;
+  display_rpm = true;
 }
-
-/* Display variables */
-bool display_rpm = false;
-bool display_mph = true;
 
 
 void setup() {
